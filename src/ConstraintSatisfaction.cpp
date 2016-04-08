@@ -50,6 +50,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <exception>
 
 using std::string;
 using std::vector;
@@ -59,6 +60,22 @@ using std::stringstream;
 using std::ifstream;
 using std::unordered_map;
 using std::unordered_set;
+using std::exception;
+using std::strcat;
+
+// Configuration Params.
+#define word_limit 10
+#define board_rows 15
+#define board_columns 15
+
+// Path to the input text file.
+string file_path = "src/lemma.al.txt";
+
+// Randomly select k words from words file.
+vector<string> words_selected;
+
+// The CROSSWORD design board.
+char board[board_rows][board_columns];
 
 void out(string s) {
     cout << s << endl;
@@ -76,13 +93,128 @@ vector<string> split(string str, char delimiter) {
   return internal;
 }
 
-int main() {
-	// Configuration Params.
-	string file_path = "src/lemma.al.txt";
-	int word_limit = 10;  // number of words in the puzzle
-	int board_rows = 15;
-	int board_columns = 15;
+void print_board() {
+	for (int i = 0; i < board_rows; ++i) {
+		for (int j = 0; j < board_columns; ++j) {
+			cout << (board[i][j]);
+		}
+		cout << endl;
+	}
+}
 
+void check_satisfied() {
+
+}
+
+//string pad_row_word(string word, int padding, int expected_size) {
+//	string output;
+//	for (int i = 0; i < padding; ++i) {
+//		output += "#";
+//	}
+//	output += word;
+//	while(output.size() < )
+//
+//	return output;
+//}
+
+// Example get_word_all_positions("hello", 15);
+// Output:
+//  hello#####
+//	#hello####
+//	##hello###
+//	###hello##
+//	####hello#
+//	#####hello
+vector<string> get_word_all_positions(string word, int size) {
+	vector<string> output;
+	if (size < word.size()) {
+		return output;
+	}
+
+	int padding_size = size - word.size();
+	string padding;
+	padding.insert(padding.end(), padding_size, '#');
+
+	for (int i = 0; i <= padding_size; ++i) {
+		string tmp = padding;
+		output.push_back(tmp.insert(i, word));
+	}
+
+	return output;
+}
+
+void set_board_row(int row_number, string word) {
+	for (int i = 0; i < board_columns; ++i) {
+	  try{
+		  board[row_number][i] = word.at(i);
+	  } catch (exception& e) {
+		cout << "An exception occurred. Exception Nr" << endl;
+	  }
+	}
+}
+
+vector<string> get_all_column_words_upto_row(int row_number) {
+	return vector<string>();
+}
+
+// updates new remaining words after removing
+bool check_and_remove_column_words(vector<string>* new_remaining_words, int row_number) {
+	return true;
+}
+
+bool backtrack_design_crossword(vector<string> remaining_words, int row_number) {
+	if (remaining_words.size() == 0) {
+		return true;
+	} else if (row_number >= board_rows) {
+		return false;
+	}
+
+	int num_words_left = remaining_words.size();
+	for (int i = 0; i < num_words_left; ++i) {
+		string word = remaining_words.at(i);
+		vector<string> new_remaining_words = remaining_words;
+		new_remaining_words.erase(new_remaining_words.begin() + i);
+
+		bool is_solved;
+		vector<string> word_padded_all_positions = get_word_all_positions(word, board_columns);
+		for (auto padded_word : word_padded_all_positions) {
+			// Set the word as row
+//			set_board_row(row_number, word);
+
+			// Remove some more remaining words based on columns.
+			if (!check_and_remove_column_words(&new_remaining_words, row_number)) {
+				return false;
+			}
+			if (backtrack_design_crossword(new_remaining_words, (row_number + 1))) {
+				is_solved = true;
+				break;
+			}
+		}
+
+		if (is_solved) {
+			break;
+		}
+
+		// Try skipping the row - Set the row as ##########
+		string whitespace_row;
+		whitespace_row.insert(whitespace_row.end(), board_columns, '#');
+		set_board_row(row_number, whitespace_row);
+		// Check columns to remove words
+		vector<string> remaining_words_no_change = remaining_words;
+		if (!check_and_remove_column_words(&remaining_words_no_change, row_number)) {
+			return false;
+		}
+		if (backtrack_design_crossword(remaining_words, row_number + 1)) {
+			break;
+		}
+
+	}
+
+	// No possible combination resulted in a successful design.
+	return false;
+}
+
+int main() {
 	out("Reading the file containing english lemmas.");
 	ifstream lemma_file(file_path);
 	if(lemma_file.fail()) {
@@ -105,29 +237,42 @@ int main() {
 			" and " << words.size() << " words." << endl;
 
 
-	// Randomly select k words from words vector.
-	vector<string> words_selected;
-
-
-
+	// Select k random words.
+    srand (time (nullptr));
+    for (int i = 0; i < word_limit; ++i) {
+    	int random = rand() % words.size();
+    	words_selected.push_back(words.at(random));
+    }
 
 	// Map the words by their size.
 	unordered_map<int, unordered_set<string> > word_size_map;
 	for (string word : words_selected) {
 		word_size_map[word.size()].insert(word);
+		cout << word << " ";
 	}
-
-	// Find domain for all row variables
-	// Combination of whitespace(s) separated words of length <= board_columns
-	vector<string> row_variable_domain;
-
-	// Find domain for all column variables
-	// Combination of whitespace(s) separated words of length <= board_rows
-	vector<string> column_variable_domain;
+	cout << endl;
 
 	// The first 3 constraints are satisfied by representing the board as a 2D array.
-	char board[board_rows][board_columns];
+	for (int i = 0; i < board_rows; ++i) {
+		for (int j = 0; j < board_columns; ++j) {
+			board[i][j] = '#';
+		}
+	}
 
+	// Backtracking implementation.
+	// For each row, start at index 0 and try to fit next available word at 0.
+	// First finish off each index to fit the word using whitespaces
+	// Then try next word
+	// While passing over to next row, check if column consistency exists and some words
+	// can be removed.
+	// End condition - no words left or
+	if (backtrack_design_crossword(words_selected, 0)) {
+		out("Successfully designed crossword!");
+		print_board();
+	} else {
+		out("Could not design crossword!");
+	}
 
 	return 0;
 }
+
