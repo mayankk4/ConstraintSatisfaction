@@ -134,7 +134,7 @@ int main() {
 	vector<string> column_variable_domain;
 
 	// The first 3 constraints are satisfied by representing the board as a 2D array.
-    char board[board_rows][board_columns];
+	char board[board_rows][board_columns];
 
 
 	return 0;
