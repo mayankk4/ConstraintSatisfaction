@@ -106,17 +106,6 @@ void check_satisfied() {
 
 }
 
-//string pad_row_word(string word, int padding, int expected_size) {
-//	string output;
-//	for (int i = 0; i < padding; ++i) {
-//		output += "#";
-//	}
-//	output += word;
-//	while(output.size() < )
-//
-//	return output;
-//}
-
 // Example get_word_all_positions("hello", 15);
 // Output:
 //  hello#####
