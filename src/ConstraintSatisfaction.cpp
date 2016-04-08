@@ -64,9 +64,9 @@ using std::exception;
 using std::strcat;
 
 // Configuration Params.
-#define word_limit 10
-#define board_rows 15
-#define board_columns 15
+#define word_limit 3
+#define board_rows 10
+#define board_columns 10
 
 // Path to the input text file.
 string file_path = "src/lemma.al.txt";
@@ -179,7 +179,7 @@ bool backtrack_design_crossword(vector<string> remaining_words, int row_number) 
 		vector<string> word_padded_all_positions = get_word_all_positions(word, board_columns);
 		for (auto padded_word : word_padded_all_positions) {
 			// Set the word as row
-//			set_board_row(row_number, word);
+			set_board_row(row_number, padded_word);
 
 			// Remove some more remaining words based on columns.
 			if (!check_and_remove_column_words(&new_remaining_words, row_number)) {
