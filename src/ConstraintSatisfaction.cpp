@@ -102,10 +102,6 @@ void print_board() {
 	}
 }
 
-void check_satisfied() {
-
-}
-
 // Example get_word_all_positions("hello", 15);
 // Output:
 //  hello#####
@@ -132,6 +128,8 @@ vector<string> get_word_all_positions(string word, int size) {
 	return output;
 }
 
+// Assigns a word to a row in the board. The word is properly padded
+// with whitespaces before passing it to this function.
 void set_board_row(int row_number, string word) {
 	for (int i = 0; i < board_columns; ++i) {
 	  try{
@@ -142,13 +140,15 @@ void set_board_row(int row_number, string word) {
 	}
 }
 
+// Scans columns and returns the completed words found.
 vector<string> get_all_column_words_upto_row(int row_number) {
 	return vector<string>();
 }
 
-// updates new remaining words after removing
+// Updates new remaining words after removing the words found in columns. If we
+// find a word which is not present in the word_selected vector, we return false.
 bool check_and_remove_column_words(vector<string>* new_remaining_words, int row_number) {
-	return true;
+	return ((rand() % 2) == 0) ? true : false;
 }
 
 bool backtrack_design_crossword(vector<string> remaining_words, int row_number) {
@@ -171,30 +171,25 @@ bool backtrack_design_crossword(vector<string> remaining_words, int row_number) 
 
 			// Remove some more remaining words based on columns.
 			if (!check_and_remove_column_words(&new_remaining_words, row_number)) {
-				return false;
+				continue;
 			}
 			if (backtrack_design_crossword(new_remaining_words, (row_number + 1))) {
 				return true;
 			}
-		}
+		}  // try the next padding combination of the word
 
-		// Try skipping the row - Set the row as ##########
-		string whitespace_row;
-		whitespace_row.insert(whitespace_row.end(), board_columns, '#');
-		set_board_row(row_number, whitespace_row);
-		// Check columns to remove words
-		vector<string> remaining_words_no_change = remaining_words;
-		if (!check_and_remove_column_words(&remaining_words_no_change, row_number)) {
-			return false;
-		}
-		if (backtrack_design_crossword(remaining_words, row_number + 1)) {
-			break;
-		}
+	}  // try the next word in the row.
 
+	// Try skipping the row - Set the row as ##########
+	string whitespace_row;
+	whitespace_row.insert(whitespace_row.end(), board_columns, '#');
+	set_board_row(row_number, whitespace_row);
+	// Check columns to remove words
+	vector<string> remaining_words_with_whitespace_row = remaining_words;
+	if (!check_and_remove_column_words(&remaining_words_with_whitespace_row, row_number)) {
+		return false;
 	}
-
-	// No possible combination resulted in a successful design.
-	return false;
+	return (backtrack_design_crossword(remaining_words_with_whitespace_row, row_number + 1));
 }
 
 int main() {
