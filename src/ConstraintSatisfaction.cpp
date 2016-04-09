@@ -51,6 +51,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <exception>
+#include <iterator>
 
 using std::string;
 using std::vector;
@@ -64,7 +65,7 @@ using std::exception;
 using std::strcat;
 
 // Configuration Params.
-#define word_limit 7
+#define word_limit 5
 #define board_rows 10
 #define board_columns 20
 
@@ -135,31 +136,98 @@ void set_board_row(int row_number, string word) {
 	  try{
 		  board[row_number][i] = word.at(i);
 	  } catch (exception& e) {
-		cout << "An exception occurred. Exception Nr" << endl;
+		cout << "An exception occurred." << endl;
 	  }
 	}
 }
 
+// Extracts words for a column upto a given row.
+// Ignore words of size 1.
+vector<string> get_words_for_column_upto_row(int column_number, int row_number) {
+	string column_value_till_row;
+	for (int i = 0; i <= row_number; ++i) {
+		column_value_till_row += board[i][column_number];
+	}
+
+	vector<string> words;
+	int i = 0;
+	while (1) {
+		// clear the leading group of #
+		while((i <= row_number) && (column_value_till_row.at(i) == '#')) {
+			++i;
+		}
+
+		if (i > row_number) {
+			break;
+		}
+
+		string word = "";
+		while((i <= row_number) && (column_value_till_row.at(i) != '#')) {
+			word += column_value_till_row.at(i);
+			++i;
+		}
+
+		// Means that we didnt find # till row = row_number.
+		if (i > row_number) {
+			break;
+		}
+
+		// This means word ended and character at current i is '#'
+		if (word.size() > 1) {
+			words.push_back(word);
+		}
+	}
+
+	return words;
+}
+
 // Scans columns and returns the completed words found.
 vector<string> get_all_column_words_upto_row(int row_number) {
-	return vector<string>();
+	vector<string> words;
+	for (int i = 0; i < board_columns; ++i) {
+		for (auto word : get_words_for_column_upto_row(i, row_number)) {
+			words.push_back(word);
+		}
+	}
+
+	return words;
 }
 
 // Updates new remaining words after removing the words found in columns. If we
 // find a word which is not present in the word_selected vector, we return false.
 bool check_and_remove_column_words(vector<string>* new_remaining_words, int row_number) {
-	return ((rand() % 2) == 0) ? true : false;
+
+	vector<string> column_words = get_all_column_words_upto_row(row_number);
+	for (string word : column_words) {
+	    vector<string>::iterator iter = find(
+	    		new_remaining_words->begin(), new_remaining_words->end(), word);
+	    if (iter == new_remaining_words->end()) {
+	    	return false;
+	    } else {
+	    	new_remaining_words->erase(iter);
+	    }
+	}
+
+	return true;
 }
 
 bool backtrack_design_crossword(vector<string> remaining_words, int row_number) {
-	if (remaining_words.size() == 0) {
-		return true;
-	} else if (row_number >= board_rows) {
+	// TODO: There is an edge-case bug here i think.
+	if (row_number >= board_rows) {
 		return false;
 	}
 
+	if (remaining_words.size() == 0) {
+		string whitespace_row;
+		whitespace_row.insert(whitespace_row.end(), board_columns, '#');
+		set_board_row(row_number, whitespace_row);
+		// Check columns.
+		vector<string> empty;
+		return check_and_remove_column_words(&empty, row_number);
+	}
+
 	int num_words_left = remaining_words.size();
-	for (int i = 0; i < num_words_left; ++i) {
+	for (int i = 0; i < num_words_left; ++i) {  // try to fit each remianing word in this position.
 		string word = remaining_words.at(i);
 		vector<string> new_remaining_words = remaining_words;
 		new_remaining_words.erase(new_remaining_words.begin() + i);
@@ -211,8 +279,8 @@ int main() {
 	}
 	out("Finished processing the file.");
 
-	cout << "Using board size " << board_columns << "x" << board_rows <<
-			" and " << words.size() << " words." << endl;
+	cout  << endl << "Using board size " << board_columns << "x" << board_rows <<
+			" and " << words.size() << " words." << endl << endl;
 
 
 	// Select k random words.
@@ -224,6 +292,7 @@ int main() {
 
 	// Map the words by their size.
 	unordered_map<int, unordered_set<string> > word_size_map;
+	out("The words chosen are:");
 	for (string word : words_selected) {
 		word_size_map[word.size()].insert(word);
 		cout << word << " ";
@@ -245,10 +314,10 @@ int main() {
 	// can be removed.
 	// End condition - no words left or
 	if (backtrack_design_crossword(words_selected, 0)) {
-		out("Successfully designed crossword!");
+		out("\nSuccessfully designed crossword!");
 		print_board();
 	} else {
-		out("Could not design crossword!");
+		out("\nCould not design crossword!");
 	}
 
 	return 0;
