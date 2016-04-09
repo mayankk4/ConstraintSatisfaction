@@ -65,12 +65,10 @@ using std::exception;
 using std::strcat;
 
 // Configuration Params.
-#define word_limit 5
-#define board_rows 10
-#define board_columns 20
-
-// Path to the input text file.
-string file_path = "src/lemma.al.txt";
+#define word_limit 7
+#define board_rows 4
+#define board_columns 9
+string file_path = "src/lemma.al.txt"; // Path to the input text file.
 
 // Randomly select k words from words file.
 vector<string> words_selected;
@@ -143,39 +141,27 @@ void set_board_row(int row_number, string word) {
 
 // Extracts words for a column upto a given row.
 // Ignore words of size 1.
-vector<string> get_words_for_column_upto_row(int column_number, int row_number) {
+vector<string> get_word_for_column_ending_at_row(int column_number, int row_number) {
 	string column_value_till_row;
 	for (int i = 0; i <= row_number; ++i) {
 		column_value_till_row += board[i][column_number];
 	}
 
 	vector<string> words;
-	int i = 0;
-	while (1) {
-		// clear the leading group of #
-		while((i <= row_number) && (column_value_till_row.at(i) == '#')) {
-			++i;
-		}
+	if (column_value_till_row.at(row_number) != '#' &&
+			row_number != (board_rows -1)) {  // special handling for last row
+		return words;  // empty
+	}
 
-		if (i > row_number) {
-			break;
-		}
+	if (row_number > 0 && column_value_till_row.at(row_number - 1) == '#') {
+		return words;  // empty
+	}
 
-		string word = "";
-		while((i <= row_number) && (column_value_till_row.at(i) != '#')) {
-			word += column_value_till_row.at(i);
-			++i;
-		}
+	vector<string> parts = split(column_value_till_row, '#');
+	string word = parts.at(parts.size() - 1);
 
-		// Means that we didnt find # till row = row_number.
-		if (i > row_number) {
-			break;
-		}
-
-		// This means word ended and character at current i is '#'
-		if (word.size() > 1) {
-			words.push_back(word);
-		}
+	if (word.size() > 1) {
+		words.push_back(word);
 	}
 
 	return words;
@@ -185,7 +171,7 @@ vector<string> get_words_for_column_upto_row(int column_number, int row_number) 
 vector<string> get_all_column_words_upto_row(int row_number) {
 	vector<string> words;
 	for (int i = 0; i < board_columns; ++i) {
-		for (auto word : get_words_for_column_upto_row(i, row_number)) {
+		for (auto word : get_word_for_column_ending_at_row(i, row_number)) {
 			words.push_back(word);
 		}
 	}
@@ -211,9 +197,21 @@ bool check_and_remove_column_words(vector<string>* new_remaining_words, int row_
 	return true;
 }
 
+// Get current word at give row
+string get_row_word(int row_number) {
+	string output;
+	for (int i=0; i< board_columns; ++i) {
+		output += board[row_number][i];
+	}
+	return output;
+}
+
+// BACKTRACKING IMPLEMENTATION - Recursively calls itself.
 bool backtrack_design_crossword(vector<string> remaining_words, int row_number) {
-	// TODO: There is an edge-case bug here i think.
 	if (row_number >= board_rows) {
+		if (remaining_words.size() == 0) {
+			return true;
+		}
 		return false;
 	}
 
@@ -232,8 +230,10 @@ bool backtrack_design_crossword(vector<string> remaining_words, int row_number) 
 		vector<string> new_remaining_words = remaining_words;
 		new_remaining_words.erase(new_remaining_words.begin() + i);
 
+
 		vector<string> word_padded_all_positions = get_word_all_positions(word, board_columns);
 		for (auto padded_word : word_padded_all_positions) {
+
 			// Set the word as row
 			set_board_row(row_number, padded_word);
 
@@ -252,6 +252,7 @@ bool backtrack_design_crossword(vector<string> remaining_words, int row_number) 
 	string whitespace_row;
 	whitespace_row.insert(whitespace_row.end(), board_columns, '#');
 	set_board_row(row_number, whitespace_row);
+
 	// Check columns to remove words
 	vector<string> remaining_words_with_whitespace_row = remaining_words;
 	if (!check_and_remove_column_words(&remaining_words_with_whitespace_row, row_number)) {
@@ -284,11 +285,19 @@ int main() {
 
 
 	// Select k random words.
-    srand (time (nullptr));
-    for (int i = 0; i < word_limit; ++i) {
-    	int random = rand() % words.size();
-    	words_selected.push_back(words.at(random));
-    }
+//    srand (time (nullptr));
+//    for (int i = 0; i < word_limit; ++i) {
+//    	int random = rand() % words.size();
+//    	words_selected.push_back(words.at(random));
+//    }
+	words_selected.push_back("white");
+	words_selected.push_back("eleven");
+	words_selected.push_back("nine");
+	words_selected.push_back("hen");
+	words_selected.push_back("ile");
+	words_selected.push_back("te");
+	words_selected.push_back("ev");
+
 
 	// Map the words by their size.
 	unordered_map<int, unordered_set<string> > word_size_map;
