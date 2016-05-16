@@ -43,6 +43,7 @@
  *
  */
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -55,6 +56,7 @@
 
 using std::string;
 using std::vector;
+using std::cin;
 using std::cout;
 using std::endl;
 using std::stringstream;
@@ -62,19 +64,19 @@ using std::ifstream;
 using std::unordered_map;
 using std::unordered_set;
 using std::exception;
-using std::strcat;
 
 // Configuration Params.
-#define word_limit 7
-#define board_rows 4
-#define board_columns 9
-string file_path = "src/lemma.al.txt"; // Path to the input text file.
+int word_limit;
+int board_rows;
+int board_columns;
+
+const string file_path = "src/lemma.al.txt"; // Path to the input text file.
 
 // Randomly select k words from words file.
 vector<string> words_selected;
 
 // The CROSSWORD design board.
-char board[board_rows][board_columns];
+char** board;
 
 void out(string s) {
     cout << s << endl;
@@ -185,7 +187,7 @@ bool check_and_remove_column_words(vector<string>* new_remaining_words, int row_
 
 	vector<string> column_words = get_all_column_words_upto_row(row_number);
 	for (string word : column_words) {
-	    vector<string>::iterator iter = find(
+	    vector<string>::iterator iter = std::find(
 	    		new_remaining_words->begin(), new_remaining_words->end(), word);
 	    if (iter == new_remaining_words->end()) {
 	    	return false;
@@ -225,7 +227,7 @@ bool backtrack_design_crossword(vector<string> remaining_words, int row_number) 
 	}
 
 	int num_words_left = remaining_words.size();
-	for (int i = 0; i < num_words_left; ++i) {  // try to fit each remianing word in this position.
+	for (int i = 0; i < num_words_left; ++i) {  // try to fit each remaining word in this position.
 		string word = remaining_words.at(i);
 		vector<string> new_remaining_words = remaining_words;
 		new_remaining_words.erase(new_remaining_words.begin() + i);
@@ -280,24 +282,40 @@ int main() {
 	}
 	out("Finished processing the file.");
 
+	// Initialize the config params.
+	cout << "Please enter the number of rows in crossword." << endl;
+	int rows, columns, num_words;
+	cin >> rows;
+	cout << "Please enter the number of columns in crossword." << endl;
+	cin >> columns;
+	cout << "Please enter the number of words to pick." << endl;
+	cin >> num_words;
+	board_rows = rows;
+	board_columns = columns;
+	word_limit = num_words;
 	cout  << endl << "Using board size " << board_columns << "x" << board_rows <<
-			" and " << words.size() << " words." << endl << endl;
+			" and " << word_limit << "words out of " << words.size() << " words." << endl << endl;
 
 
 	// Select k random words.
-//    srand (time (nullptr));
-//    for (int i = 0; i < word_limit; ++i) {
-//    	int random = rand() % words.size();
-//    	words_selected.push_back(words.at(random));
-//    }
-	words_selected.push_back("white");
-	words_selected.push_back("eleven");
-	words_selected.push_back("nine");
-	words_selected.push_back("hen");
-	words_selected.push_back("ile");
-	words_selected.push_back("te");
-	words_selected.push_back("ev");
+    srand (time (nullptr));
+    for (int i = 0; i < word_limit; ++i) {
+    	int random = rand() % words.size();
+    	words_selected.push_back(words.at(random));
+    }
+    // Test case to make sure that the algorithm works as expected.
+    //	words_selected.push_back("white");
+	//	words_selected.push_back("eleven");
+	//	words_selected.push_back("nineny");
+	//	words_selected.push_back("hen");
+	//	words_selected.push_back("ile");
+	//	words_selected.push_back("ten");
+	//	words_selected.push_back("evy");
 
+    board = new char*[board_columns];
+    for(int i = 0; i < board_columns; ++i) {
+        board[i] = new char[board_rows];
+    }
 
 	// Map the words by their size.
 	unordered_map<int, unordered_set<string> > word_size_map;
@@ -329,6 +347,7 @@ int main() {
 		out("\nCould not design crossword!");
 	}
 
+	delete board;
 	return 0;
 }
 
